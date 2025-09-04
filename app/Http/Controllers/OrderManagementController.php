@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
+// Removed Laravel mail imports - now using EmailJS from frontend
 
 class OrderManagementController extends Controller
 {
@@ -133,8 +135,51 @@ class OrderManagementController extends Controller
             // Set timestamps for specific statuses
             if ($request->status === 'confirmed') {
                 $updateData['confirmed_at'] = now();
+                
+                // Check stock availability before confirming
+                foreach ($order->orderItems as $orderItem) {
+                    $product = Product::find($orderItem->product_id);
+                    if ($product && $product->stock < $orderItem->quantity) {
+                        return redirect()->back()->with('error', "Insufficient stock for product: {$product->name}. Available: {$product->stock}, Required: {$orderItem->quantity}");
+                    }
+                }
+                
+                // Reduce stock for each product in the order
+                foreach ($order->orderItems as $orderItem) {
+                    $product = Product::find($orderItem->product_id);
+                    if ($product) {
+                        $product->decrement('stock', $orderItem->quantity);
+                    }
+                }
             } elseif ($request->status === 'delivered') {
                 $updateData['delivered_at'] = now();
+                
+                // Return order data for EmailJS notification (handled by frontend)
+                $orderData = [
+                    'order_id' => $order->id,
+                    'customer_name' => $order->user ? $order->user->name : 'N/A',
+                    'customer_email' => $order->user ? $order->user->email : null,
+                    'order_total' => $order->total_amount,
+                    'delivery_address' => $order->shipping_address ? 
+                        ($order->shipping_address['address'] . ', ' . $order->shipping_address['city']) : 'N/A',
+                    'order_items' => $order->orderItems->map(function($item) {
+                        return [
+                            'product_name' => $item->product_name,
+                            'quantity' => $item->quantity,
+                            'price' => $item->price
+                        ];
+                    })->toArray()
+                ];
+            } elseif ($request->status === 'cancelled') {
+                // Restore stock if order was previously confirmed
+                if ($order->status === 'confirmed') {
+                    foreach ($order->orderItems as $orderItem) {
+                        $product = Product::find($orderItem->product_id);
+                        if ($product) {
+                            $product->increment('stock', $orderItem->quantity);
+                        }
+                    }
+                }
             }
             
             $order->update($updateData);
@@ -154,7 +199,19 @@ class OrderManagementController extends Controller
                     break;
             }
             
-            return redirect()->back()->with('success', $message);
+            $response = ['success' => true, 'message' => $message];
+            
+            // Include order data for email notification if delivered
+            if ($request->status === 'delivered' && isset($orderData)) {
+                $response['order_data'] = $orderData;
+            }
+            
+            // Check if request expects JSON (AJAX request)
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json($response);
+            }
+            
+            return redirect()->back()->with('success', $message)->with('order_data', $response['order_data'] ?? null);
             
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return redirect()->back()->with('error', 'Order not found.');

@@ -59,6 +59,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware(['auth:admin'])->group(function () {
         // Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/reports/monthly/download', [DashboardController::class, 'downloadMonthlyReport'])->name('reports.monthly.download');
+        Route::get('/reports/weekly/download', [DashboardController::class, 'downloadWeeklyReport'])->name('reports.weekly.download');
         
         // Logout
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');

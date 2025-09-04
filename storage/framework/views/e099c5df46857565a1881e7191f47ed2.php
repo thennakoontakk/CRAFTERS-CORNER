@@ -754,7 +754,12 @@
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('scripts'); ?>
+<!-- EmailJS SDK -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
+    // Initialize EmailJS
+        emailjs.init('Bz8Och_CZPVOe83ux'); // Replace with your EmailJS public key
+    
     function updateOrderStatus(orderId, status, confirmMessage = null) {
         const message = confirmMessage || `Are you sure you want to ${status} this order?`;
         
@@ -766,21 +771,91 @@
                 btn.innerHTML = '<i class="icon-loading"></i> Processing...';
             });
             
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = `/admin/orders/${orderId}/status`;
-            
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '<?php echo e(csrf_token()); ?>';
             
-            form.innerHTML = `
-                <input type="hidden" name="_token" value="${csrfToken}">
-                <input type="hidden" name="_method" value="PUT">
-                <input type="hidden" name="status" value="${status}">
-            `;
-            
-            document.body.appendChild(form);
-            form.submit();
+            // Use fetch API for AJAX request
+            fetch(`/admin/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: status
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // If status is delivered and we have order data, send email via EmailJS
+                    if (status === 'delivered' && data.order_data) {
+                        sendDeliveryNotificationEmail(data.order_data, function() {
+                            // Success callback - reload page after email is sent
+                            alert(data.message || 'Order status updated successfully!');
+                            window.location.reload();
+                        }, function(error) {
+                            // Error callback - show error but still reload
+                            alert('Order status updated but failed to send email notification: ' + error.text);
+                            window.location.reload();
+                        });
+                    } else {
+                        // No email to send, just show success and reload
+                        alert(data.message || 'Order status updated successfully!');
+                        window.location.reload();
+                    }
+                } else {
+                    throw new Error(data.message || 'Failed to update order status');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating order status:', error);
+                alert('Error: ' + error.message);
+                
+                // Reset button states
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.innerHTML = btn.getAttribute('data-original-text') || 'Update';
+                });
+            });
         }
+    }
+    
+    function sendDeliveryNotificationEmail(orderData, successCallback, errorCallback) {
+        console.log('Attempting to send email with data:', orderData);
+        
+        // Validate customer email
+        if (!orderData.customer_email || orderData.customer_email === null) {
+            console.error('Customer email is missing or null');
+            alert('Cannot send delivery notification: Customer email is not available.');
+            if (errorCallback) errorCallback(new Error('Customer email is missing'));
+            return;
+        }
+        
+        const templateParams = {
+            to_email: orderData.customer_email,
+            customer_name: orderData.customer_name || 'Valued Customer',
+            order_id: orderData.order_id,
+            order_total: orderData.order_total,
+            delivery_address: orderData.delivery_address || 'N/A',
+            order_items: orderData.order_items.map(item => 
+                `${item.product_name} (Qty: ${item.quantity}) - $${item.price}`
+            ).join('\n')
+        };
+        
+        console.log('EmailJS template params:', templateParams);
+        
+        emailjs.send('service_pri4y63', 'template_0lwo24z', templateParams)
+            .then(function(response) {
+                console.log('Delivery notification email sent successfully!', response.status, response.text);
+                alert('Delivery notification email sent successfully!');
+                if (successCallback) successCallback();
+            })
+            .catch(function(error) {
+                console.error('Failed to send delivery notification email:', error);
+                alert('Failed to send delivery notification email. Please check the console for details.');
+                if (errorCallback) errorCallback(error);
+            });
     }
     
     function toggleDropdown(orderId) {

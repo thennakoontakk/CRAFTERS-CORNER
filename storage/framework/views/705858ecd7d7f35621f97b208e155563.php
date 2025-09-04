@@ -1,9 +1,7 @@
-@extends('layouts.shared')
+<?php $__env->startSection('title', 'Order Details - Admin Panel'); ?>
+<?php $__env->startSection('page-title', 'Order Details'); ?>
 
-@section('title', 'Order Details - Admin Panel')
-@section('page-title', 'Order Details')
-
-@section('styles')
+<?php $__env->startSection('styles'); ?>
 <style>
     /* Order show specific styles */
         
@@ -352,28 +350,30 @@
             }
         }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
                 <div class="page-header">
                     <div>
                         <h1>Order Details</h1>
-                        <div class="breadcrumb">Home / Orders / Order #{{ $order['order_number'] ?? $order['id'] }}</div>
+                        <div class="breadcrumb">Home / Orders / Order #<?php echo e($order['order_number'] ?? $order['id']); ?></div>
                     </div>
-                    <a href="{{ route('admin.orders.index') }}" class="back-button">← Back to Orders</a>
+                    <a href="<?php echo e(route('admin.orders.index')); ?>" class="back-button">← Back to Orders</a>
                 </div>
                 
-                @if(session('success'))
+                <?php if(session('success')): ?>
                     <div class="alert alert-success">
-                        {{ session('success') }}
+                        <?php echo e(session('success')); ?>
+
                     </div>
-                @endif
+                <?php endif; ?>
                 
-                @if(session('error') || isset($error))
+                <?php if(session('error') || isset($error)): ?>
                     <div class="alert alert-error">
-                        {{ session('error') ?? $error }}
+                        <?php echo e(session('error') ?? $error); ?>
+
                     </div>
-                @endif
+                <?php endif; ?>
                 
                 <div class="order-details">
                     <!-- Order Information -->
@@ -385,19 +385,20 @@
                             <div class="order-info">
                                 <div class="info-item">
                                     <div class="info-label">Order Number</div>
-                                    <div class="info-value">#{{ $order['order_number'] ?? $order['id'] }}</div>
+                                    <div class="info-value">#<?php echo e($order['order_number'] ?? $order['id']); ?></div>
                                 </div>
                                 
                                 <div class="info-item">
                                     <div class="info-label">Order Date</div>
-                                    <div class="info-value">{{ date('M d, Y H:i', strtotime($order['created_at'] ?? now())) }}</div>
+                                    <div class="info-value"><?php echo e(date('M d, Y H:i', strtotime($order['created_at'] ?? now()))); ?></div>
                                 </div>
                                 
                                 <div class="info-item">
                                     <div class="info-label">Order Status</div>
                                     <div class="info-value">
-                                        <span class="status-badge status-{{ $order['status'] ?? 'pending' }}">
-                                            {{ ucfirst($order['status'] ?? 'pending') }}
+                                        <span class="status-badge status-<?php echo e($order['status'] ?? 'pending'); ?>">
+                                            <?php echo e(ucfirst($order['status'] ?? 'pending')); ?>
+
                                         </span>
                                     </div>
                                 </div>
@@ -405,8 +406,9 @@
                                 <div class="info-item">
                                     <div class="info-label">Payment Status</div>
                                     <div class="info-value">
-                                        <span class="status-badge payment-{{ $order['payment_status'] ?? 'pending' }}">
-                                            {{ ucfirst($order['payment_status'] ?? 'pending') }}
+                                        <span class="status-badge payment-<?php echo e($order['payment_status'] ?? 'pending'); ?>">
+                                            <?php echo e(ucfirst($order['payment_status'] ?? 'pending')); ?>
+
                                         </span>
                                     </div>
                                 </div>
@@ -415,39 +417,41 @@
                             <!-- Order Items -->
                             <div class="order-items">
                                 <h4 style="margin-bottom: 15px; color: #333;">Order Items</h4>
-                                @if(isset($order['items']) && count($order['items']) > 0)
-                                    @foreach($order['items'] as $item)
+                                <?php if(isset($order['items']) && count($order['items']) > 0): ?>
+                                    <?php $__currentLoopData = $order['items']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <div class="item">
-                                            <img src="{{ $item['product_image'] ?? '/images/placeholder.jpg' }}" alt="{{ $item['product_name'] ?? 'Product' }}" class="item-image">
+                                            <img src="<?php echo e($item['product_image'] ?? '/images/placeholder.jpg'); ?>" alt="<?php echo e($item['product_name'] ?? 'Product'); ?>" class="item-image">
                                             <div class="item-details">
-                                                <div class="item-name">{{ $item['product_name'] ?? 'Unknown Product' }}</div>
+                                                <div class="item-name"><?php echo e($item['product_name'] ?? 'Unknown Product'); ?></div>
                                                 <div class="item-meta">
-                                                    Quantity: {{ $item['quantity'] ?? 1 }} × ${{ number_format($item['unit_price'] ?? 0, 2) }}
+                                                    Quantity: <?php echo e($item['quantity'] ?? 1); ?> × $<?php echo e(number_format($item['unit_price'] ?? 0, 2)); ?>
+
                                                 </div>
                                             </div>
                                             <div class="item-price">
-                                                ${{ number_format($item['total_price'] ?? 0, 2) }}
+                                                $<?php echo e(number_format($item['total_price'] ?? 0, 2)); ?>
+
                                             </div>
                                         </div>
-                                    @endforeach
-                                @else
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                <?php else: ?>
                                     <p style="color: #666; text-align: center; padding: 20px;">No items found for this order.</p>
-                                @endif
+                                <?php endif; ?>
                             </div>
                             
                             <!-- Order Summary -->
                             <div class="order-summary">
                                 <div class="summary-row">
                                     <span>Subtotal:</span>
-                                    <span>${{ number_format(($order['total_amount'] ?? 0) - ($order['shipping_cost'] ?? 0), 2) }}</span>
+                                    <span>$<?php echo e(number_format(($order['total_amount'] ?? 0) - ($order['shipping_cost'] ?? 0), 2)); ?></span>
                                 </div>
                                 <div class="summary-row">
                                     <span>Shipping:</span>
-                                    <span>${{ number_format($order['shipping_cost'] ?? 0, 2) }}</span>
+                                    <span>$<?php echo e(number_format($order['shipping_cost'] ?? 0, 2)); ?></span>
                                 </div>
                                 <div class="summary-row total">
                                     <span>Total:</span>
-                                    <span>${{ number_format($order['total_amount'] ?? 0, 2) }}</span>
+                                    <span>$<?php echo e(number_format($order['total_amount'] ?? 0, 2)); ?></span>
                                 </div>
                             </div>
                         </div>
@@ -463,11 +467,11 @@
                             <div class="card-body">
                                 <div class="customer-info">
                                     <div class="customer-details">
-                                        <div class="customer-name">{{ $order['user']['name'] ?? 'N/A' }}</div>
-                                        <div class="customer-email">{{ $order['user']['email'] ?? 'N/A' }}</div>
-                                        @if(isset($order['user']['phone']))
-                                            <div style="color: #666;">{{ $order['user']['phone'] }}</div>
-                                        @endif
+                                        <div class="customer-name"><?php echo e($order['user']['name'] ?? 'N/A'); ?></div>
+                                        <div class="customer-email"><?php echo e($order['user']['email'] ?? 'N/A'); ?></div>
+                                        <?php if(isset($order['user']['phone'])): ?>
+                                            <div style="color: #666;"><?php echo e($order['user']['phone']); ?></div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -479,17 +483,18 @@
                                 <h3>Shipping Address</h3>
                             </div>
                             <div class="card-body">
-                                @if(isset($order['shipping_address']))
+                                <?php if(isset($order['shipping_address'])): ?>
                                     <div class="shipping-address">
                                         <div class="address-details">
-                                            {{ $order['shipping_address']['street'] ?? '' }}<br>
-                                            {{ $order['shipping_address']['city'] ?? '' }}, {{ $order['shipping_address']['state'] ?? '' }} {{ $order['shipping_address']['zip'] ?? '' }}<br>
-                                            {{ $order['shipping_address']['country'] ?? '' }}
+                                            <?php echo e($order['shipping_address']['street'] ?? ''); ?><br>
+                                            <?php echo e($order['shipping_address']['city'] ?? ''); ?>, <?php echo e($order['shipping_address']['state'] ?? ''); ?> <?php echo e($order['shipping_address']['zip'] ?? ''); ?><br>
+                                            <?php echo e($order['shipping_address']['country'] ?? ''); ?>
+
                                         </div>
                                     </div>
-                                @else
+                                <?php else: ?>
                                     <p style="color: #666;">No shipping address provided.</p>
-                                @endif
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -498,42 +503,43 @@
                 <!-- Action Buttons -->
                 <div class="action-section">
                     <div class="action-buttons">
-                        @if(($order['status'] ?? 'pending') === 'pending')
-                            <form method="POST" action="{{ route('admin.orders.update-status', $order['id']) }}" style="display: inline;">
-                                @csrf
-                                @method('PUT')
+                        <?php if(($order['status'] ?? 'pending') === 'pending'): ?>
+                            <form method="POST" action="<?php echo e(route('admin.orders.update-status', $order['id'])); ?>" style="display: inline;">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PUT'); ?>
                                 <input type="hidden" name="status" value="confirmed">
                                 <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to confirm this order?')">Confirm Order</button>
                             </form>
-                        @endif
+                        <?php endif; ?>
                         
-                        @if(($order['status'] ?? 'pending') === 'confirmed')
-                            <form method="POST" action="{{ route('admin.orders.update-status', $order['id']) }}" style="display: inline;">
-                                @csrf
-                                @method('PUT')
+                        <?php if(($order['status'] ?? 'pending') === 'confirmed'): ?>
+                            <form method="POST" action="<?php echo e(route('admin.orders.update-status', $order['id'])); ?>" style="display: inline;">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PUT'); ?>
                                 <input type="hidden" name="status" value="delivered">
                                 <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to mark this order as delivered?')">Mark as Delivered</button>
                             </form>
-                        @endif
+                        <?php endif; ?>
                         
-                        @if(in_array($order['status'] ?? 'pending', ['pending', 'confirmed']))
-                            <form method="POST" action="{{ route('admin.orders.update-status', $order['id']) }}" style="display: inline;">
-                                @csrf
-                                @method('PUT')
+                        <?php if(in_array($order['status'] ?? 'pending', ['pending', 'confirmed'])): ?>
+                            <form method="POST" action="<?php echo e(route('admin.orders.update-status', $order['id'])); ?>" style="display: inline;">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PUT'); ?>
                                 <input type="hidden" name="status" value="cancelled">
                                 <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this order?')">Cancel Order</button>
                             </form>
-                        @endif
+                        <?php endif; ?>
                         
-                        <a href="{{ route('admin.orders.index') }}" class="btn btn-secondary">Back to Orders</a>
+                        <a href="<?php echo e(route('admin.orders.index')); ?>" class="btn btn-secondary">Back to Orders</a>
                     </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 <script>
     function toggleSubmenu(element) {
         const parent = element.parentElement;
         parent.classList.toggle('open');
     }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.shared', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH C:\Users\thenn\OneDrive\Desktop\softora\08 25\admin-panel\resources\views/admin/orders/show.blade.php ENDPATH**/ ?>
