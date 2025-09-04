@@ -24,7 +24,7 @@ const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount, onPaymentSucces
   const [errors, setErrors] = useState({});
 
   const paymentMethods = [
-    { id: 'fake', name: 'Fake Payment (Dev)', icon: '🧪', isDev: true },
+    { id: 'fake', name: 'Test Payment (Dev)', icon: '🧪', isDev: true },
     { id: 'card', name: 'Credit/Debit Card', icon: '💳' },
     { id: 'paypal', name: 'PayPal', icon: '🅿️' },
     { id: 'googlepay', name: 'Google Pay', icon: '🔵' },
